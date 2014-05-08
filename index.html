@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+    <title>Introduction to modern Fortran through (mostly) uncommented examples</title>
+    <style>
+      body { counter-reset: chapter; }
+      h2:before { content: counter(chapter) ". "; counter-increment: chapter;}
+      h2 { counter-reset: section; }
+      h3:before { content: counter(chapter) "." counter(section) " "; counter-increment: section; }
+    </style>
+  </head>
+  <body>
+    <article>
+    <h1>Introduction to modern Fortran by uncommented examples</h1>
+    <p>This documents presents some of the features of modern Fortran (mostly up to Fortran 2003), with an emphasis on things useful in scientific computing. In particular, less used features, such as object oriented code, is not presented. Due to complexity, presently interoperability between Fortran and C is also omitted. The <code>forall</code> construct is omitted on purpose since it can mostly be replaced by the superior <code>do concurrent</code>. Most Fortan intrinsic procedures are also left out, with the focus instead on Fortran the language. Coarrays will probably be included in the future. For an excellent (although much lengthier) description of the features of Fortran, see Modern Fortran Explained, by Metcalf et al.</p>
+    <p>The reader is assumed to be familiar with programming. The examples presented here are mostly uncommented. This is to encourage the reader to read and actually think about what is going on. It is easy to find more information about a confusing topic by using a simple web search.</p>
+    <p>Due to historical baggage there are many ways to do the same things in Fortran, some better than others. This documents tries to err on the safe side as to not teach any bad habits to new Fortraneers. In particular, implicit types are disabled and procedures are placed inside modules so that they obtain an implicit interface and the programmer gets to enjoy the benefits of type safety. Additionally, intent is always specified for procedure arguments.</p>
+    <section id='minimal'>
+    <h2><a href='#minimal'>Minimal Fortran program</a></h2>
+<pre><code>
+program program_example
+implicit none
+
+print *, "Hello, world!"
+
+end program
+</code></pre>
+    </section>
+    <section id='types'>
+    <h2><a href='#types'>Types and variables</a></h2>
+    <section id='basic_types'>
+    <h3><a href='#basic_types'>Basic types</a></h3>
+<pre><code>
+program variables_example
+implicit none
+
+integer :: a, b
+integer, dimension(10) :: array_with_10_elements
+integer, dimension(-5:5) :: another_array_with_10_elements
+real :: c
+double precision :: d
+logical :: e
+character(len=80) :: string_with_max_80_chars
+integer, parameter :: f = 10
+integer(kind=selected_int_kind(10)) :: int_with_max_value_1e10
+real(kind=selected_real_kind(5,10)) :: real_with_precision_5_max_value_1e10
+
+end program
+</code></pre>
+    </section>
+    <section id='derived_types'>
+    <h3><a href='#derived_types'>Derived types</a></h3>
+<pre><code>
+program derivedtype_example
+implicit none
+
+type point2d
+  real :: x
+  real :: y
+end type
+type, extends(point2d) :: point3d
+  real :: z
+end type
+type(point3d) :: pt
+
+pt%x = 0
+pt%point2d%y = 1
+pt%z = 1
+
+end program
+</code></pre>
+    </section>
+    <section id='associate'>
+    <h3><a href='#associate'>Associate</a></h3>
+<pre><code>
+program associate_example
+implicit none
+
+integer :: i
+
+associate(j =&gt; i)
+j = 1
+end associate
+print *, i
+
+end program
+</code></pre>
+    </section>
+    <section id='block'>
+    <h3><a href='#block'>Block</a></h3>
+<pre><code>
+program block_example
+implicit none
+
+integer :: i
+i = 1
+
+block
+  integer :: j
+  j = 2
+end block
+
+print *, j ! Error, undefined outside block
+
+end program
+</code></pre>
+    </section>
+    </section>
+    <section id='arrays'>
+    <h2><a href='#arrays'>Arrays and matrices</a></h2>
+    <section id='array_elements'>
+    <h3><a href='#array_elements'>Array elements</a></h3>
+    <pre><code>
+program array_example
+implicit none
+
+integer, dimension(-2:2) :: a
+
+a = 0
+a = [1,2,3,4,5]
+a(-2) = 1
+a(-1:0) = 3
+a(1:) = [1,2]
+a([-2,0,2]) = [7,8,9]
+a(-2:2:2) = [7,8,9]
+
+end program
+</code></pre>
+    </section>
+    <section id='multidimensional_arrays'>
+    <h3><a href='#multidimensional_arrays'>Multidimensional arrays</a></h3>
+<pre><code>
+program multidim_example
+implicit none
+
+integer, dimension(3,3) :: a
+
+a = 0
+a = reshape([1,2,3,4,5,6,7,8,9],[3,3])
+a(3,3) = 1
+a(1,:) = [2,3,4]
+a(:,1:2) = reshape([1,2,3,4,5,6],[3,2])
+
+end program
+</code></pre>
+    </section>
+    <section id='advanced_constuctors'>
+    <h3><a href='#advanced_constuctors'>Advanced array constructors</a></h3>
+<pre><code>
+program arrayconstructor_example
+implicit none
+
+integer :: i,j
+
+print *, [((i*j, i=1,3), j=1,3)]
+
+end program
+</code></pre>
+    </section>
+    <section id='dynamic_arrays'>
+    <h3><a href='#dynamic_arrays'>Dynamic array allocation</a></h3>
+<pre><code>
+program allocatable_example
+implicit none
+
+integer, allocatable :: a(:)
+
+allocate(a(10))
+
+end program
+</code></pre>
+    </section>
+    <section id='automatic_allocation'>
+    <h3><a href='automatic_allocation'>Automatic array allocation</a></h3>
+<pre><code>
+program autoallocate_example
+implicit none
+
+integer, allocatable :: a(:)
+
+a = [1,2,3]
+print *, shape(a)
+
+a = [1,2,3,4,5]
+print *, shape(a)
+
+end program
+</code></pre>
+    </section>
+    <section id='array_math'>
+    <h3><a href='#array_math'>Array mathematics</a></h3>
+<pre><code>
+program arraymath_example
+implicit none
+integer, parameter, dimension(2) :: a1 = [1,2]
+integer, parameter, dimension(2) :: a2 = [3,4]
+
+print *, 2*a1
+print *, 2+a1
+print *, a1+a2
+print *, a1*a2
+
+end program
+</code></pre>
+    </section>
+    </section>
+    <section id='control_structures'>
+    <h2><a href='#control_structures'>Control structures</a></h2>
+    <section id='if'>
+    <h3><a href='#if'>If</a></h3>
+<pre><code>
+program if_example
+implicit none
+
+integer, parameter :: i = 4
+if (i &lt; 0 .and. i /= -2) then
+  print *, "Case 1"
+else if (i == 0 .or. i == 2) then
+  print *, "Case 2"
+else
+  print *, "Case 3"
+end if
+
+end program
+</code></pre>
+    </section>
+    <section id='select'>
+    <h3><a href='#select'>Select case</a></h3>
+<pre><code>
+program case_example
+implicit none
+
+integer, parameter :: i = 4
+
+select case(i)
+  case (:-1)
+    print *, "i &lt; 0"
+  case (0)
+    print *, "i = 0"
+  case (1:)
+    print *, "i &gt; 0"
+  case default
+    print *, "An error occurred"
+    stop
+end select
+
+end program
+</code></pre>
+    </section>
+    <section id='do'>
+    <h3><a href='#do'>Do</a></h3>
+<pre><code>
+program do_example
+implicit none
+
+integer :: i
+
+do i=1,10
+  print *, "Loop iteration",i
+end do
+
+end program
+</code></pre>
+    </section>
+    <section id='do_while'>
+    <h3><a href='#do_while'>Do-while</a></h3>
+<pre><code>
+program while_example
+implicit none
+
+integer :: i
+
+i = 0
+do while (i &lt; 10)
+  print *, "Loop iteration", i
+  i = i + 1
+end do
+
+end program
+</code></pre>
+    </section>
+    <section id='concurrent'>
+    <h3><a href='#concurrent'>Do concurrent</a></h3>
+<pre><code>
+program forall_example
+implicit none
+
+real, dimension(10,10) :: a
+
+do concurrent (i=lbound(a,1):ubound(a,1), j=lbound(a,2):ubound(a,2))
+  a(i,j) = i + j
+end do
+
+end program
+</code></pre>
+    </section>
+    <section id='where'>
+    <h3><a href='#where'>Where</a></h3>
+<pre><code>
+program where_example
+implicit none
+
+integer, dimension(4) :: a
+
+a = [1,2,3,4]
+where (a &gt; 2)
+  a = 1
+elsewhere
+  a = 0
+end where
+
+end program
+</code></pre>
+    </section>
+    </section>
+    <section id='procedures'>
+    <h2><a href='#procedures'>Procedures</a></h2>
+    <section id='subroutines'>
+    <h3><a href='#subroutines'>Subroutines</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+
+  subroutine square(x)
+  integer, intent(inout) :: x
+
+  x = x**2
+  return
+
+  end subroutine
+
+end module
+
+program subroutine_example
+use example_module, only: square
+implicit none
+
+integer :: x
+
+x = 2
+call square(x)
+print *, x
+
+end program
+</code></pre>
+    </section>
+    <section id='functions'>
+    <h3><a href='#functions'>Functions</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+
+  integer function square(x)
+  integer, intent(in) :: x
+
+  square = x**2
+  return
+
+  end function
+
+end module
+
+program function_example
+use example_module, only: square
+implicit none
+
+integer :: x
+
+x = 2
+print *, square(x)
+
+end program
+</code></pre>
+    </section>
+    <section id='intent'>
+    <h3><a href='#intent'>Intent</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+
+  subroutine f(x,y,z)
+  integer, intent(in) :: x
+  integer, intent(inout) :: y
+  integer, intent(out) :: z
+
+  x = 4 ! Error, not allowed due to intent
+  z = 4 ! Allowed
+  y = z ! Error, not allowed due to intent
+  y = x*y ! Allowed
+
+  end subroutine
+
+end module
+
+program intent_example
+use example_module, only: f
+implicit none
+
+integer :: x, y, z
+
+x = 1
+y = 2
+z = 3
+
+print *, f(x,y,z), x, y, z
+
+end program
+</code></pre>
+    </section>
+    <section id='recursion'>
+    <h3><a href='#recursion'>Recursive functions</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+  recursive integer function factorial(n) result(res)
+  integer, intent(in) :: n
+
+  if(n &lt;= 1) then
+    res = 1
+  else
+    res = res*factorial(n-1)
+  end if
+    
+  end function
+
+end module
+
+program recursive_example
+use example_module
+implicit none
+
+print *, factorial(5)
+
+end program
+</code></pre>
+    </section>
+    <section id='save'>
+    <h3><a href='#save'>Save attribute</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+
+  integer function foo()
+  integer, save :: times_called = 0
+
+  times_called = times_called + 1
+  foo = times_called
+
+  end function
+
+end module
+
+program save_example
+use example_module, only: foo
+implicit none
+
+print *, foo(), foo()
+
+end program
+</code></pre>
+    </section>
+    <section id='optional'>
+    <h3><a href='#optional'>Optional arguments</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+
+  integer function foo(x)
+  integer, intent(in), optional :: x
+  if(present(x)) then
+    foo = x
+  else
+    foo = -1
+  end if
+  end function
+
+end module
+
+program optional_example
+use example_module, only: foo
+implicit none
+
+print *, foo(), foo(1)
+
+end program
+</code></pre>
+    </section>
+    <section id='pure'>
+    <h3><a href='#pure'>Pure functions</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+
+  pure integer function f()
+  integer :: file_unit
+
+  open(newunit=file_unit, file="example") ! Not allowed, pure function
+  f = 1
+
+  end function
+
+end module
+
+program pure_example
+use example_module, only: f
+implicit none
+
+print *, f()
+
+end program
+</code></pre>
+    </section>
+    <section id='elemental'>
+    <h3><a href='#elemental'>Elemental functions</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+
+  pure elemental integer function square(x)
+  integer, intent(in) :: x
+
+  square = x**2
+
+  end function
+
+end module
+
+program elemental_example
+use example_module, only: square
+implicit none
+
+integer, dimension(4) :: a
+
+a = 2
+print *, square(a)
+
+end program
+</code></pre>
+    </section>
+    <section id='array_arguments'>
+    <h3><a href='#array_argunmets'>Array arguments</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+
+  subroutine foo(a1,a2)
+  integer, dimension(:) :: a1
+  integer, dimension(:,:) :: a2
+  end subroutine
+
+end module
+  
+program arrayarg_example
+use example_module, only: foo
+implicit none
+
+call foo([1,2],reshape([1,2,3,4],[2,2]))
+
+end program
+</code></pre>
+    </section>
+    <section id='functions_as_arguments'>
+    <h3><a href='#functions_as_arguments'>Functions as arguments</a></h3>
+<pre><code>
+module example_module
+implicit none
+contains
+  integer function value1(f)
+  interface
+    integer function f(x)
+    integer, intent(in) :: x
+    end function
+  end interface
+
+  value1 = f(1)
+  
+  end function
+
+  integer function foo(x)
+  integer, intent(in) :: x
+
+  foo = 2*x+3
+
+  end function
+
+end module
+
+program funcarg_example
+use example_module, only: value1, foo
+implicit none
+
+print *, value1(foo)
+
+end program
+</code></pre>
+    </section>
+    <section id='overloading'>
+    <h3><a href='#overloading'>Overloading</a></h3>
+<pre><code>
+module example_module
+implicit none
+interface square
+  module procedure int_square, real_square
+end interface
+contains
+
+  integer function int_square(x)
+  integer, intent(in) :: x
+
+  int_square = x**2
+
+  end function
+
+  real function real_square(x)
+  real, intent(in) :: x
+
+  real_square = x**2
+
+  end function
+
+end module
+
+program overload_example
+use example_module
+implicit none
+
+print *, square(2), square(2.0)
+
+end program
+</code></pre>
+    </section>
+    </section>
+    <section id='io'>
+    <h2><a href='#io'>Input/Output</a></h2>
+    <section id='output'>
+    <h3><a href='#output'>Output</a></h3>
+<pre><code>
+program output_example
+implicit none
+
+print *, "A string", 1, 1.0, [1,2,3]
+
+end program
+</code></pre>
+    </section>
+    <section id='format'>
+    <h3><a href='#format'>Format strings</a></h3>
+<pre><code>
+program format_example
+implicit none
+
+print "(2F0.3, F0.1)", 1.0,2.0,3.0
+
+end program
+</code></pre>
+    </section>
+    <section id='input'>
+    <h3><a href='#input'>Input</a></h3>
+<pre><code>
+program input_example
+implicit none
+
+integer :: i, j
+read (*,*) i, j
+
+end program
+</code></pre>
+    </section>
+    <section id='files'>
+    <h3><a href='#files'>Simple file access</a></h3>
+<pre><code>
+program file_example
+implicit none
+
+integer :: file_unit
+character(len=80) :: text
+
+open(newunit=file_unit, file="file_name")
+write (file_unit, *) "Hello world!"
+read (file_unit, *) text
+print *, text
+
+end program
+</code></pre>
+    </section>
+    <section id='stringio'>
+    <h3><a href='#stringio'>String IO</a></h3>
+<pre><code>
+program stringio_example
+implicit none
+
+character(2) :: text = "42"
+character(len=80) :: text2
+integer :: number
+
+read (text, *) number
+write (text2, *) number
+
+print *, number, text2
+
+end program
+</code></pre>
+    </section>
+    </section>
+    </article>
+  </body>
+</html>
