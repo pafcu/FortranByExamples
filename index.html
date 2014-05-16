@@ -92,6 +92,21 @@ print *, pt
 end program
 </code></pre>
     </section>
+    <section id='pointer'>
+    <h3><a href='#pointer'>Pointer</a></h3>
+<pre><code>
+program pointer_example
+implicit none
+
+integer, target :: i
+integer, pointer :: j
+
+j => i
+j = 1
+print *, i
+end program
+</code></pre>
+    </section>
     <section id='associate'>
     <h3><a href='#associate'>Associate</a></h3>
 <pre><code>
