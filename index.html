@@ -540,13 +540,15 @@ end program
 <pre><code>
 module example_module
 implicit none
+integer :: a
 contains
 
-  pure integer function f()
-  integer :: file_unit
-
-  open(newunit=file_unit, file="example") ! Not allowed, pure function
-  f = 1
+  pure integer function f(x)
+  ! Every line in this function generates a compiler error due to being in a pure function
+  integer :: x ! Must have intent(in)
+  integer, save :: file_unit ! Can't save state
+  a = 1 ! Can't assign to global or module variables
+  open(newunit=file_unit, file="example") ! Can't use I/O
 
   end function
 
@@ -556,7 +558,7 @@ program pure_example
 use example_module, only: f
 implicit none
 
-print *, f()
+print *, f(1)
 
 end program
 </code></pre>
@@ -583,7 +585,7 @@ implicit none
 
 integer, dimension(4) :: a
 
-a = 2
+a = [1,2,3,4]
 print *, square(a)
 
 end program
@@ -716,10 +718,11 @@ end program
 program input_example
 implicit none
 
-integer :: i, j
+integer :: i
+double precision :: j
 
 read (*,*) i, j
-print *, i, j
+print *, "You entered the numbers", i, j
 
 end program
 </code></pre>

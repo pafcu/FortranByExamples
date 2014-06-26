@@ -1,0 +1,9 @@
+https://creativecommons.org/publicdomain/zero/1.0/
+
+index.html contains HTML source code with Fortfan examples in code blocks.
+Use process.py to add semantic highlighting to the HTML, and to test compilation of the examples.
+Some of the examples contain broken code on purpose, so expect to see compilation errors.
+This would probably be better served by some sort of unit testing with expected failures etc.
+
+Usage:
+python process.py <index.html >index2.html

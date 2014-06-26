@@ -1,4 +1,6 @@
-# This code is horrible. Apologies to anyone who reads it. I was feeling lazy.
+# This code is horrible. Apologies to anyone who reads it. I was feeling lazy. If chanted out loud, it may or may not awaken Cthulu.
+# Basically, reads in from stdin some HTML with Fortran in <pre><code>-blocks, semantically colors it, and outputs the modified HTML on stdout.
+
 from __future__ import print_function # Make it compatible with Python2.6+
 import sys
 import re # Yes, this is all based on regular expressions. What could possibly go wrong?
@@ -8,7 +10,7 @@ import collections
 import itertools
 
 def tag(code):
-	"""Add semantic tags to Fortran code. This is all horrible ad-hoc and just barely works, even for a small subset of Fortran. But it's good enough for now"""
+	"""Add semantic tags to Fortran code. This is all horrible ad-hoc and just barely works, even for a small subset of Fortran. But it's good enough for now. Until it breaks apart horribly."""
 
 	keywords = collections.OrderedDict() # Ensure that things are processed in the right order
 	keywords['typename'] = ['integer','logical','real','double precision','character', 'complex']
