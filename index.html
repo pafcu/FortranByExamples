@@ -432,9 +432,9 @@ contains
   integer, intent(out) :: z
 
   x = 4 ! Error, not allowed due to intent
-  z = 4 ! Allowed
+  z = 4
   y = z ! Error, not allowed due to intent
-  y = x*y ! Allowed
+  y = x*y
 
   end subroutine
 
@@ -544,10 +544,10 @@ implicit none
 integer :: a
 contains
 
-  pure integer function f(x) ! Error, function can't be pure due to the content below
-  integer :: x ! Error, must have intent(in)
-  integer, save :: file_unit ! Error, can't save state
-  a = 1 ! Error, can't assign to global or module variables
+  pure integer function f(x)              ! Error, function can't be pure due to the content below
+  integer :: x                            ! Error, must have intent(in)
+  integer, save :: file_unit              ! Error, can't save state
+  a = 1                                   ! Error, can't assign to global or module variables
   open(newunit=file_unit, file="example") ! Error, can't use I/O
 
   end function
