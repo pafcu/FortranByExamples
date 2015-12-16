@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+    <meta name="author" content="Stefan Parviainen">
+    <meta name="keywords" content="fortran,programming">
+    <meta name="description" content="Introduction to modern Fortran through uncommented examples">
+    <title>Introduction to modern Fortran through (mostly) uncommented examples</title>
+    <style>
+      body { counter-reset: chapter; }
+      h2:before { content: counter(chapter) ". "; counter-increment: chapter;}
+      h2 { counter-reset: section; }
+      h3:before { content: counter(chapter) "." counter(section) " "; counter-increment: section; }
+      .typename { color: red; }
+      .attribute { color: orangered; }
+      .typeparam { color: orangered; }
+      .scalarvar { color: blue; font-style: italic;}
+      .arrvar { color: blue; font-style:italic; font-weight: bold; }
+      .funcname { color: purple; }
+      .subname { color: purple; }
+      .intrinsic { color: slateblue; }
+      .literal { color: gray; }
+      .loop { color: darkgoldenrod; }
+      .control { color: crimson; }
+      .other { color: limegreen; }
+      .comment {background: lightblue; }
+      .operator {color: brown; }
+      .special {color: darkgreen; }
+    </style>
+  </head>
+  <body>
+    <article>
+    <h1>Introduction to modern Fortran through (mostly) uncommented examples</h1>
+    <p>This documents presents some of the features of modern Fortran (mostly up to Fortran 2003), with an emphasis on things useful in scientific computing. In particular, less used features, such as object oriented code, is not presented. Due to complexity, presently interoperability between Fortran and C is also omitted. The <code>forall</code> construct is omitted on purpose since it can mostly be replaced by the superior <code>do concurrent</code>. Most Fortan intrinsic procedures are also left out, with the focus instead on Fortran the language. Coarrays will probably be included in the future. For an excellent (although much lengthier) description of the features of Fortran, see Modern Fortran Explained, by Metcalf et al. The same author also provides a nice overview of the development of the language in his paper, <a href='http://journal.info.unlp.edu.ar/journal/journal30/papers/JCST-Apr11-1.pdf'>The Seven Ages of Fortran</a>.</p>
+    <p>The reader is assumed to be familiar with programming. The examples presented here are mostly uncommented. This is to encourage the reader to read and actually think about what is going on. It is easy to find more information about a confusing topic by using a simple web search.</p>
+    <p>Due to historical baggage there are many ways to do the same things in Fortran, some better than others. This documents tries to err on the safe side as to not teach any bad habits to new Fortraneers. In particular, implicit types are disabled and procedures are placed inside modules so that they obtain an implicit interface and the programmer gets to enjoy the benefits of type safety. Additionally, intent is always specified for procedure arguments.</p>
+		<section id='toc'>
+ <ul>
+  <li><a href='#minimal'>Minimal Fortran program</a></li>
+  <li><a href='#types'>Types and variables</a>
+  <ul>
+   <li><a href='#basic_types'>Basic types</a></li>
+   <li><a href='#derived_types'>Derived types</a></li>
+   <li><a href='#pointer'>Pointer</a></li>
+   <li><a href='#associate'>Associate</a></li>
+   <li><a href='#block'>Block</a></li>
+  </ul>
+  <li><a href='#arrays'>Arrays and matrices</a>
+  <ul>
+   <li><a href='#array_elements'>Array elements</a></li>
+   <li><a href='#multidimensional_arrays'>Multidimensional arrays</a></li>
+   <li><a href='#advanced_constuctors'>Advanced array constructors</a></li>
+   <li><a href='#dynamic_arrays'>Dynamic array allocation</a></li>
+   <li><a href='automatic_allocation'>Automatic array allocation</a></li>
+   <li><a href='#array_math'>Array mathematics</a></li>
+  </ul>
+  <li><a href='#control_structures'>Control structures</a>
+  <ul>
+   <li><a href='#if'>If</a></li>
+   <li><a href='#select'>Select case</a></li>
+   <li><a href='#do'>Do</a></li>
+   <li><a href='#do_while'>Do-while</a></li>
+   <li><a href='#concurrent'>Do-concurrent</a></li>
+   <li><a href='#where'>Where</a></li>
+  </ul>
+  <li><a href='#procedures'>Procedures</a>
+  <ul>
+   <li><a href='#subroutines'>Subroutines</a></li>
+   <li><a href='#functions'>Functions</a></li>
+   <li><a href='#intent'>Intent</a></li>
+   <li><a href='#recursion'>Recursive functions</a></li>
+   <li><a href='#save'>Save attribute</a></li>
+   <li><a href='#optional'>Optional arguments</a></li>
+   <li><a href='#pure'>Pure functions</a></li>
+   <li><a href='#elemental'>Elemental functions</a></li>
+   <li><a href='#array_argunmets'>Array arguments</a></li>
+   <li><a href='#functions_as_arguments'>Functions as arguments</a></li>
+   <li><a href='#overloading'>Overloading</a></li>
+  </ul>
+  <li><a href='#io'>Input/Output</a>
+  <ul>
+   <li><a href='#output'>Output</a></li>
+   <li><a href='#format'>Format strings</a></li>
+   <li><a href='#input'>Input</a></li>
+   <li><a href='#files'>Simple file access</a></li>
+   <li><a href='#stringio'>String IO</a>
+ </ul>
+</ul></section>
+    <section id='minimal'>
+    <h2><a href='#minimal'>Minimal Fortran program</a></h2>
+<pre><code>
+<span class="other">program</span> program_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="literal">"Hello, world"</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='types'>
+    <h2><a href='#types'>Types and variables</a></h2>
+    <section id='basic_types'>
+    <h3><a href='#basic_types'>Basic types</a></h3>
+<pre><code>
+<span class="other">program</span> variables_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">a</span>, <span class="scalarvar">b</span>
+<span class="typename">integer</span>, <span class="attribute">dimension</span>(<span class="literal">10</span>) :: <span class="arrvar">array_with_10_elements</span>
+<span class="typename">integer</span>, <span class="attribute">dimension</span>(<span class="literal">-5</span>:<span class="literal">4</span>) :: <span class="arrvar">another_array_with_10_elements</span>
+<span class="typename">real</span> :: <span class="scalarvar">c</span>
+<span class="typename">double precision</span> :: <span class="scalarvar">d</span>
+<span class="typename">complex</span> :: <span class="scalarvar">e</span>
+<span class="typename">logical</span> :: <span class="scalarvar">f</span>
+<span class="typename">character</span>(<span class="typeparam">len</span>=<span class="literal">80</span>) :: <span class="scalarvar">string_with_max_80_chars</span>
+<span class="typename">integer</span>, <span class="attribute">parameter</span> :: <span class="scalarvar">g</span> = <span class="literal">10</span>
+<span class="typename">integer</span>(<span class="typeparam">kind</span>=<span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/SELECTED_INT_KIND.html">selected_int_kind</a></span>(<span class="literal">10</span>)) :: <span class="scalarvar">int_with_max_value_1e10</span>
+<span class="typename">real</span>(<span class="typeparam">kind</span>=<span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/SELECTED_REAL_KIND.html">selected_real_kind</a></span>(<span class="literal">5</span>, <span class="literal">10</span>)) :: <span class="scalarvar">real_with_precision_5_max_value_1e10</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='derived_types'>
+    <h3><a href='#derived_types'>Derived types</a></h3>
+<pre><code>
+<span class="other">program</span> derivedtype_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">type</span> <span class="typename">point2d</span>
+  <span class="typename">real</span> :: <span class="scalarvar">x</span>
+  <span class="typename">real</span> :: <span class="scalarvar">y</span>
+<span class="other">end type</span>
+<span class="other">type</span>, <span class="other">extends</span>(<span class="typename">point2d</span>) :: <span class="typename">point3d</span>
+  <span class="typename">real</span> :: <span class="scalarvar">z</span>
+<span class="other">end type</span>
+<span class="other">type</span>(<span class="typename">point3d</span>) :: <span class="scalarvar">pt</span>
+
+<span class="scalarvar">pt</span>%<span class="scalarvar">x</span> = <span class="literal">0</span>
+<span class="scalarvar">pt</span>%<span class="typename">point2d</span>%<span class="scalarvar">y</span> = <span class="literal">1</span>
+<span class="scalarvar">pt</span>%<span class="scalarvar">z</span> = <span class="literal">1</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="scalarvar">pt</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='pointer'>
+    <h3><a href='#pointer'>Pointer</a></h3>
+<pre><code>
+<span class="other">program</span> pointer_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">target</span> :: <span class="scalarvar">i</span>
+<span class="typename">integer</span>, <span class="attribute">pointer</span> :: <span class="scalarvar">j</span>
+
+<span class="scalarvar">j</span> => <span class="scalarvar">i</span>
+<span class="scalarvar">j</span> = <span class="literal">1</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="scalarvar">i</span>
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='associate'>
+    <h3><a href='#associate'>Associate</a></h3>
+<pre><code>
+<span class="other">program</span> associate_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">i</span>
+
+<span class="other">associate</span>(j <span class="operator">=&gt;</span> <span class="scalarvar">i</span>)
+j = <span class="literal">1</span>
+<span class="other">end associate</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="scalarvar">i</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='block'>
+    <h3><a href='#block'>Block</a></h3>
+<pre><code>
+<span class="other">program</span> block_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">i</span>
+
+<span class="scalarvar">i</span> = <span class="literal">1</span>
+
+<span class="other">block</span>
+  <span class="typename">integer</span> :: <span class="scalarvar">j</span>
+  <span class="scalarvar">j</span> = <span class="literal">2</span>
+<span class="other">end block</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="scalarvar">j</span> <span class="comment">! Error, undefined outside block</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    </section>
+    <section id='arrays'>
+    <h2><a href='#arrays'>Arrays and matrices</a></h2>
+    <section id='array_elements'>
+    <h3><a href='#array_elements'>Array elements</a></h3>
+    <pre><code>
+<span class="other">program</span> array_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">dimension</span>(<span class="literal">-2</span>:<span class="literal">2</span>) :: <span class="arrvar">a</span>
+
+<span class="arrvar">a</span> = <span class="literal">0</span>
+<span class="arrvar">a</span> = [<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>, <span class="literal">4</span>, <span class="literal">5</span>]
+<span class="arrvar">a</span>(<span class="literal">-2</span>) = <span class="literal">1</span>
+<span class="arrvar">a</span>(<span class="literal">-1</span>:<span class="literal">0</span>) = <span class="literal">3</span>
+<span class="arrvar">a</span>(<span class="literal">1</span>:) = [<span class="literal">1</span>, <span class="literal">2</span>]
+<span class="arrvar">a</span>([<span class="literal">-2</span>, <span class="literal">0</span>, <span class="literal">2</span>]) = [<span class="literal">7</span>, <span class="literal">8</span>, <span class="literal">9</span>]
+<span class="arrvar">a</span>(<span class="literal">-2</span>:<span class="literal">2</span>:<span class="literal">2</span>) = [<span class="literal">7</span>, <span class="literal">8</span>, <span class="literal">9</span>]
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='multidimensional_arrays'>
+    <h3><a href='#multidimensional_arrays'>Multidimensional arrays</a></h3>
+<pre><code>
+<span class="other">program</span> multidim_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">dimension</span>(<span class="literal">3</span>, <span class="literal">3</span>) :: <span class="arrvar">a</span>
+
+<span class="arrvar">a</span> = <span class="literal">0</span>
+<span class="arrvar">a</span> = <span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/RESHAPE.html">reshape</a></span>([<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>, <span class="literal">4</span>, <span class="literal">5</span>, <span class="literal">6</span>, <span class="literal">7</span>, <span class="literal">8</span>, <span class="literal">9</span>], [<span class="literal">3</span>, <span class="literal">3</span>])
+<span class="arrvar">a</span>(<span class="literal">3</span>, <span class="literal">3</span>) = <span class="literal">1</span>
+<span class="arrvar">a</span>(<span class="literal">1</span>, :) = [<span class="literal">2</span>, <span class="literal">3</span>, <span class="literal">4</span>]
+<span class="arrvar">a</span>(:, <span class="literal">1</span>:<span class="literal">2</span>) = <span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/RESHAPE.html">reshape</a></span>([<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>, <span class="literal">4</span>, <span class="literal">5</span>, <span class="literal">6</span>], [<span class="literal">3</span>, <span class="literal">2</span>])
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='advanced_constuctors'>
+    <h3><a href='#advanced_constuctors'>Advanced array constructors</a></h3>
+<pre><code>
+<span class="other">program</span> arrayconstructor_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">i</span>, <span class="scalarvar">j</span>
+
+<span class="other">print</span> <span class="operator">*</span>, [((<span class="scalarvar">i</span><span class="operator">*</span><span class="scalarvar">j</span>, <span class="scalarvar">i</span>=<span class="literal">1</span>, <span class="literal">3</span>), <span class="scalarvar">j</span>=<span class="literal">1</span>, <span class="literal">3</span>)]
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='dynamic_arrays'>
+    <h3><a href='#dynamic_arrays'>Dynamic array allocation</a></h3>
+<pre><code>
+<span class="other">program</span> allocatable_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">allocatable</span>, <span class="attribute">dimension</span>(:) :: <span class="arrvar">a</span>
+
+<span class="other">allocate</span>(<span class="arrvar">a</span>(<span class="literal">10</span>))
+<span class="other">print</span> <span class="operator">*</span>, <span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/SHAPE.html">shape</a></span>(<span class="arrvar">a</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='automatic_allocation'>
+    <h3><a href='automatic_allocation'>Automatic array allocation</a></h3>
+<pre><code>
+<span class="other">program</span> autoallocate_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">allocatable</span>, <span class="attribute">dimension</span>(:) :: <span class="arrvar">a</span>
+
+<span class="arrvar">a</span> = [<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>]
+<span class="other">print</span> <span class="operator">*</span>, <span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/SHAPE.html">shape</a></span>(<span class="arrvar">a</span>)
+
+<span class="arrvar">a</span> = [<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>, <span class="literal">4</span>, <span class="literal">5</span>]
+<span class="other">print</span> <span class="operator">*</span>, <span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/SHAPE.html">shape</a></span>(<span class="arrvar">a</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='array_math'>
+    <h3><a href='#array_math'>Array mathematics</a></h3>
+<pre><code>
+<span class="other">program</span> arraymath_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">parameter</span>, <span class="attribute">dimension</span>(<span class="literal">2</span>) :: <span class="arrvar">a1</span> = [<span class="literal">1</span>, <span class="literal">2</span>]
+<span class="typename">integer</span>, <span class="attribute">parameter</span>, <span class="attribute">dimension</span>(<span class="literal">2</span>) :: <span class="arrvar">a2</span> = [<span class="literal">3</span>, <span class="literal">4</span>]
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="literal">2</span><span class="operator">*</span><span class="arrvar">a1</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="literal">2</span><span class="operator">+</span><span class="arrvar">a1</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="arrvar">a1</span><span class="operator">+</span><span class="arrvar">a2</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="arrvar">a1</span><span class="operator">*</span><span class="arrvar">a2</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    </section>
+    <section id='control_structures'>
+    <h2><a href='#control_structures'>Control structures</a></h2>
+    <section id='if'>
+    <h3><a href='#if'>If</a></h3>
+<pre><code>
+<span class="other">program</span> if_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">parameter</span> :: <span class="scalarvar">i</span> = <span class="literal">4</span>
+
+<span class="control">if</span> (<span class="scalarvar">i</span> <span class="operator">&lt;</span> <span class="literal">0</span> <span class="operator">.and.</span> <span class="scalarvar">i</span> <span class="operator">/=</span> <span class="literal">-2</span>) <span class="control">then</span>
+  <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"Case 1"</span>
+<span class="control">else if</span> (<span class="scalarvar">i</span> <span class="operator">==</span> <span class="literal">0</span> <span class="operator">.or.</span> <span class="scalarvar">i</span> <span class="operator">==</span> <span class="literal">2</span>) <span class="control">then</span>
+  <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"Case 2"</span>
+<span class="control">else</span>
+  <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"Case 3"</span>
+<span class="control">end if</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='select'>
+    <h3><a href='#select'>Select case</a></h3>
+<pre><code>
+<span class="other">program</span> case_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">parameter</span> :: <span class="scalarvar">i</span> = <span class="literal">4</span>
+
+<span class="control">select case</span>(<span class="scalarvar">i</span>)
+  <span class="control">case</span> (:<span class="literal">-1</span>)
+    <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"i &lt; 0"</span>
+  <span class="control">case</span> (<span class="literal">0</span>)
+    <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"i = 0"</span>
+  <span class="control">case</span> (<span class="literal">1</span>:)
+    <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"i &gt; 0"</span>
+  <span class="control">case default</span>
+    <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"An error occurred"</span>
+    <span class="other">stop</span>
+<span class="other">end select</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='do'>
+    <h3><a href='#do'>Do</a></h3>
+<pre><code>
+<span class="other">program</span> do_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">i</span>
+
+<span class="loop">do</span> <span class="scalarvar">i</span>=<span class="literal">1</span>, <span class="literal">10</span>
+  <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"Loop iteration"</span>, <span class="scalarvar">i</span>
+<span class="loop">end do</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='do_while'>
+    <h3><a href='#do_while'>Do-while</a></h3>
+<pre><code>
+<span class="other">program</span> dowhile_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">i</span>
+
+<span class="scalarvar">i</span> = <span class="literal">0</span>
+<span class="loop">do while</span> (<span class="scalarvar">i</span> <span class="operator">&lt;</span> <span class="literal">10</span>)
+  <span class="other">print</span> <span class="operator">*</span>, <span class="literal">"Loop iteration"</span>, <span class="scalarvar">i</span>
+  <span class="scalarvar">i</span> = <span class="scalarvar">i</span> <span class="operator">+</span> <span class="literal">1</span>
+<span class="loop">end do</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='concurrent'>
+    <h3><a href='#concurrent'>Do-concurrent</a></h3>
+<pre><code>
+<span class="other">program</span> doconcurrent_example
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="typename">integer</span> :: <span class="scalarvar">i</span>, <span class="scalarvar">j</span>
+<span class="typename">real</span>, <span class="attribute">dimension</span>(<span class="literal">10</span>, <span class="literal">10</span>) :: <span class="arrvar">a</span>
+
+<span class="loop">do concurrent</span> (<span class="scalarvar">i</span>=<span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/LBOUND.html">lbound</a></span>(<span class="arrvar">a</span>, <span class="literal">1</span>):<span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/UBOUND.html">ubound</a></span>(<span class="arrvar">a</span>, <span class="literal">1</span>), <span class="scalarvar">j</span>=<span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/LBOUND.html">lbound</a></span>(<span class="arrvar">a</span>, <span class="literal">2</span>):<span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/UBOUND.html">ubound</a></span>(<span class="arrvar">a</span>, <span class="literal">2</span>))
+  <span class="arrvar">a</span>(<span class="scalarvar">i</span>, <span class="scalarvar">j</span>) = <span class="scalarvar">i</span> <span class="operator">+</span> <span class="scalarvar">j</span>
+<span class="loop">end do</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="arrvar">a</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='where'>
+    <h3><a href='#where'>Where</a></h3>
+<pre><code>
+<span class="other">program</span> where_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">dimension</span>(<span class="literal">4</span>) :: <span class="arrvar">a</span>
+
+<span class="arrvar">a</span> = [<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>, <span class="literal">4</span>]
+<span class="loop">where</span> (<span class="arrvar">a</span> <span class="operator">&gt;</span> <span class="literal">2</span>)
+  <span class="arrvar">a</span> = <span class="literal">1</span>
+<span class="loop">elsewhere</span>
+  <span class="arrvar">a</span> = <span class="literal">0</span>
+<span class="loop">end where</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="arrvar">a</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    </section>
+    <section id='procedures'>
+    <h2><a href='#procedures'>Procedures</a></h2>
+    <section id='subroutines'>
+    <h3><a href='#subroutines'>Subroutines</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+
+  <span class="other">subroutine</span> <span class="subname">square</span>(<span class="scalarvar">x</span>)
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">inout</span>) :: <span class="scalarvar">x</span>
+
+  <span class="scalarvar">x</span> = <span class="scalarvar">x</span><span class="operator">**</span><span class="literal">2</span>
+  <span class="other">return</span>
+
+  <span class="other">end subroutine</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> subroutine_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="subname">square</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">x</span>
+
+<span class="scalarvar">x</span> = <span class="literal">2</span>
+<span class="control">call</span> <span class="subname">square</span>(<span class="scalarvar">x</span>)
+<span class="other">print</span> <span class="operator">*</span>, <span class="scalarvar">x</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='functions'>
+    <h3><a href='#functions'>Functions</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+
+  <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">square</span>(<span class="scalarvar">x</span>)
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">in</span>) :: <span class="scalarvar">x</span>
+
+  <span class="funcname">square</span> = <span class="scalarvar">x</span><span class="operator">**</span><span class="literal">2</span>
+  <span class="other">return</span>
+
+  <span class="other">end function</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> function_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="funcname">square</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">x</span>
+
+<span class="scalarvar">x</span> = <span class="literal">2</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="funcname">square</span>(<span class="scalarvar">x</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='intent'>
+    <h3><a href='#intent'>Intent</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+
+  <span class="other">subroutine</span> <span class="subname">f</span>(<span class="scalarvar">x</span>, <span class="scalarvar">y</span>, <span class="scalarvar">z</span>)
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">in</span>) :: <span class="scalarvar">x</span>
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">inout</span>) :: <span class="scalarvar">y</span>
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">out</span>) :: <span class="scalarvar">z</span>
+
+  <span class="scalarvar">x</span> = <span class="literal">4</span> <span class="comment">! Error, not allowed due to intent</span>
+  <span class="scalarvar">z</span> = <span class="literal">4</span> <span class="comment">! Allowed</span>
+  <span class="scalarvar">y</span> = <span class="scalarvar">z</span> <span class="comment">! Error, not allowed due to intent</span>
+  <span class="scalarvar">y</span> = <span class="scalarvar">x</span><span class="operator">*</span><span class="scalarvar">y</span> <span class="comment">! Allowed</span>
+
+  <span class="other">end subroutine</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> intent_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="subname">f</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">x</span>, <span class="scalarvar">y</span>, <span class="scalarvar">z</span>
+
+<span class="scalarvar">x</span> = <span class="literal">1</span>
+<span class="scalarvar">y</span> = <span class="literal">2</span>
+<span class="scalarvar">z</span> = <span class="literal">3</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="subname">f</span>(<span class="scalarvar">x</span>, <span class="scalarvar">y</span>, <span class="scalarvar">z</span>), <span class="scalarvar">x</span>, <span class="scalarvar">y</span>, <span class="scalarvar">z</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='recursion'>
+    <h3><a href='#recursion'>Recursive functions</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+  <span class="attribute">recursive</span> <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">factorial</span>(<span class="scalarvar">n</span>) <span class="attribute">result</span>(<span class="scalarvar">res</span>)
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">in</span>) :: <span class="scalarvar">n</span>
+
+  <span class="control">if</span>(<span class="scalarvar">n</span> <span class="operator">&lt;=</span> <span class="literal">1</span>) <span class="control">then</span>
+    <span class="scalarvar">res</span> = <span class="literal">1</span>
+  <span class="control">else</span>
+    <span class="scalarvar">res</span> = <span class="scalarvar">n</span><span class="operator">*</span><span class="funcname">factorial</span>(<span class="scalarvar">n</span><span class="literal">-1</span>)
+  <span class="control">end if</span>
+    
+  <span class="other">end function</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> recursive_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="funcname">factorial</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="funcname">factorial</span>(<span class="literal">5</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='save'>
+    <h3><a href='#save'>Save attribute</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+
+  <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">foo</span>()
+  <span class="typename">integer</span>, <span class="attribute">save</span> :: <span class="scalarvar">times_called</span> = <span class="literal">0</span>
+
+  <span class="scalarvar">times_called</span> = <span class="scalarvar">times_called</span> <span class="operator">+</span> <span class="literal">1</span>
+  <span class="funcname">foo</span> = <span class="scalarvar">times_called</span>
+
+  <span class="other">end function</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> save_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="funcname">foo</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="funcname">foo</span>(), <span class="funcname">foo</span>()
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='optional'>
+    <h3><a href='#optional'>Optional arguments</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+
+  <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">foo</span>(<span class="scalarvar">x</span>)
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">in</span>), <span class="attribute">optional</span> :: <span class="scalarvar">x</span>
+  <span class="control">if</span>(<span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/PRESENT.html">present</a></span>(<span class="scalarvar">x</span>)) <span class="control">then</span>
+    <span class="funcname">foo</span> = <span class="scalarvar">x</span>
+  <span class="control">else</span>
+    <span class="funcname">foo</span> = <span class="literal">-1</span>
+  <span class="control">end if</span>
+  <span class="other">end function</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> optional_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="funcname">foo</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="funcname">foo</span>(), <span class="funcname">foo</span>(<span class="literal">1</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='pure'>
+    <h3><a href='#pure'>Pure functions</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="typename">integer</span> :: <span class="scalarvar">a</span>
+<span class="other">contains</span>
+
+  <span class="attribute">pure</span> <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">f</span>(x) <span class="comment">! Error, function can't be pure due to the content below</span>
+  <span class="typename">integer</span> :: <scalarvar>x <span class="comment">! Error, must have intent(in)</span>
+  <span class="typename">integer</span>, <span class="attribute">save</span> :: <scalarvar>file_unit <span class="comment">! Error, can't save state</span>
+  <span class="scalarvar">a</span> = <span class="literal">1</span> <span class="comment">! Error, can't assign to global or module variables</span>
+  <span class="other">open</span>(newunit=file_unit, file=<span class="literal">"example"</span>) <span class="comment">! Error, can't use I/O</span>
+
+  <span class="other">end function</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> pure_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="funcname">f</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="funcname">f</span>(<span class="literal">1</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='elemental'>
+    <h3><a href='#elemental'>Elemental functions</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+
+  <span class="attribute">pure</span> <span class="attribute">elemental</span> <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">square</span>(<span class="scalarvar">x</span>)
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">in</span>) :: <span class="scalarvar">x</span>
+
+  <span class="funcname">square</span> = <span class="scalarvar">x</span><span class="operator">**</span><span class="literal">2</span>
+
+  <span class="other">end function</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> elemental_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="funcname">square</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span>, <span class="attribute">dimension</span>(<span class="literal">4</span>) :: <span class="arrvar">a</span>
+
+<span class="arrvar">a</span> = [<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>, <span class="literal">4</span>]
+<span class="other">print</span> <span class="operator">*</span>, <span class="funcname">square</span>(<span class="arrvar">a</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='array_arguments'>
+    <h3><a href='#array_argunmets'>Array arguments</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+
+  <span class="other">subroutine</span> <span class="subname">foo</span>(<span class="arrvar">a1</span>, <span class="arrvar">a2</span>)
+  <span class="typename">integer</span>, <span class="attribute">dimension</span>(:) :: <span class="arrvar">a1</span>
+  <span class="typename">integer</span>, <span class="attribute">dimension</span>(:, :) :: <span class="arrvar">a2</span>
+
+  <span class="other">print</span> <span class="operator">*</span>, <span class="arrvar">a1</span>
+  <span class="other">print</span> <span class="operator">*</span>, <span class="arrvar">a2</span>
+  <span class="other">end subroutine</span>
+
+<span class="other">end module</span>
+  
+<span class="other">program</span> arrayarg_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="subname">foo</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="control">call</span> <span class="subname">foo</span>([<span class="literal">1</span>, <span class="literal">2</span>], <span class="intrinsic"><a href="http://gcc.gnu.org/onlinedocs/gfortran/RESHAPE.html">reshape</a></span>([<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>, <span class="literal">4</span>], [<span class="literal">2</span>, <span class="literal">2</span>]))
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='functions_as_arguments'>
+    <h3><a href='#functions_as_arguments'>Functions as arguments</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">contains</span>
+  <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">value1</span>(<span class="funcname">f</span>)
+  <span class="other">interface</span>
+    <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">f</span>(<span class="scalarvar">x</span>)
+    <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">in</span>) :: <span class="scalarvar">x</span>
+    <span class="other">end function</span>
+  <span class="other">end interface</span>
+
+  <span class="funcname">value1</span> = <span class="funcname">f</span>(<span class="literal">1</span>)
+  
+  <span class="other">end function</span>
+
+  <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">foo</span>(<span class="scalarvar">x</span>)
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">in</span>) :: <span class="scalarvar">x</span>
+
+  <span class="funcname">foo</span> = <span class="literal">2</span> <span class="operator">*</span> <span class="scalarvar">x</span> <span class="operator">+</span> <span class="literal">3</span>
+
+  <span class="other">end function</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> funcarg_example
+<span class="other">use</span> example_module, <span class="other">only</span>: <span class="funcname">value1</span>, <span class="funcname">foo</span>
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="funcname">value1</span>(<span class="funcname">foo</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='overloading'>
+    <h3><a href='#overloading'>Overloading</a></h3>
+<pre><code>
+<span class="other">module</span> example_module
+<span class="other">implicit</span> <span class="special">none</span>
+<span class="other">interface</span> square
+  <span class="other">module</span> <span class="other">procedure</span> <span class="funcname">int_square</span>, <span class="funcname">real_square</span>
+<span class="other">end interface</span>
+<span class="other">contains</span>
+
+  <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">int_square</span>(<span class="scalarvar">x</span>)
+  <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">in</span>) :: <span class="scalarvar">x</span>
+
+  <span class="funcname">int_square</span> = <span class="scalarvar">x</span><span class="operator">**</span><span class="literal">2</span>
+
+  <span class="other">end function</span>
+
+  <span class="typename">real</span> <span class="other">function</span> <span class="funcname">real_square</span>(<span class="scalarvar">x</span>)
+  <span class="typename">real</span>, <span class="attribute">intent</span>(<span class="special">in</span>) :: <span class="scalarvar">x</span>
+
+  <span class="funcname">real_square</span> = <span class="scalarvar">x</span><span class="operator">**</span><span class="literal">2</span>
+
+  <span class="other">end function</span>
+
+<span class="other">end module</span>
+
+<span class="other">program</span> overload_example
+<span class="other">use</span> example_module, <span class="other">only</span>: square
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="operator">*</span>, square(<span class="literal">2</span>), square(<span class="literal">2</span>.<span class="literal">0</span>)
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    </section>
+    <section id='io'>
+    <h2><a href='#io'>Input/Output</a></h2>
+    <section id='output'>
+    <h3><a href='#output'>Output</a></h3>
+<pre><code>
+<span class="other">program</span> output_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="literal">"A string"</span>, <span class="literal">1</span>, <span class="literal">1</span>.<span class="literal">0</span>, [<span class="literal">1</span>, <span class="literal">2</span>, <span class="literal">3</span>]
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='format'>
+    <h3><a href='#format'>Format strings</a></h3>
+<pre><code>
+<span class="other">program</span> format_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="other">print</span> <span class="literal">"(2F6.3, F4.1)"</span>, <span class="literal">1</span>.<span class="literal">0</span>, <span class="literal">2</span>.<span class="literal">0</span>, <span class="literal">3</span>.<span class="literal">0</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='input'>
+    <h3><a href='#input'>Input</a></h3>
+<pre><code>
+<span class="other">program</span> input_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">i</span>
+<span class="typename">double precision</span> :: <span class="scalarvar">j</span>
+
+<span class="other">read</span> (<span class="operator">*</span>, <span class="operator">*</span>) <span class="scalarvar">i</span>, <span class="scalarvar">j</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="literal">"You entered the numbers"</span>, <span class="scalarvar">i</span>, <span class="scalarvar">j</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='files'>
+    <h3><a href='#files'>Simple file access</a></h3>
+<pre><code>
+<span class="other">program</span> file_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">integer</span> :: <span class="scalarvar">file_unit</span>
+<span class="typename">character</span>(<span class="typeparam">len</span>=<span class="literal">80</span>) :: <span class="scalarvar">text</span>
+
+<span class="other">open</span>(newunit=<span class="scalarvar">file_unit</span>, file=<span class="literal">"file_name"</span>)
+<span class="other">write</span> (<span class="scalarvar">file_unit</span>, <span class="operator">*</span>) <span class="literal">"Hello, world"</span>
+<span class="other">read</span> (<span class="scalarvar">file_unit</span>, <span class="operator">*</span>) <span class="scalarvar">text</span>
+<span class="other">print</span> <span class="operator">*</span>, <span class="scalarvar">text</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    <section id='stringio'>
+    <h3><a href='#stringio'>String IO</a></h3>
+<pre><code>
+<span class="other">program</span> stringio_example
+<span class="other">implicit</span> <span class="special">none</span>
+
+<span class="typename">character</span>(<span class="literal">2</span>) :: <span class="scalarvar">text</span> = <span class="literal">"42"</span>
+<span class="typename">character</span>(<span class="typeparam">len</span>=<span class="literal">80</span>) :: <span class="scalarvar">text2</span>
+<span class="typename">integer</span> :: <span class="scalarvar">number</span>
+
+<span class="other">read</span> (<span class="scalarvar">text</span>, <span class="operator">*</span>) <span class="scalarvar">number</span>
+<span class="other">write</span> (<span class="scalarvar">text2</span>, <span class="operator">*</span>) <span class="scalarvar">number</span>
+
+<span class="other">print</span> <span class="operator">*</span>, <span class="scalarvar">number</span>, <span class="scalarvar">text2</span>
+
+<span class="other">end program</span>
+</code></pre>
+    </section>
+    </section>
+    <footer>
+			<a href='https://creativecommons.org/publicdomain/zero/1.0/'>No rights reserved</a>. <a href='https://github.com/pafcu/FortranByExamples'>Source on Github.</a>
+    </footer>
+    </article>
+  </body>
+</html>
+
