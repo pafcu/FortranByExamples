@@ -129,6 +129,30 @@ def main():
 			pass
 
 	html = re.sub('(?<=<pre><code>)(.*?)(?=</code></pre>)', lambda m: tag(m.group(1)), html, flags=re.DOTALL)
+
+        toc="<section id='toc'>"
+        prev_level = 0
+        for m in re.findall(r'<h([234])>(.*)</h', html):
+            level = int(m[0])
+            if level > prev_level:
+                toc += '\n'
+                toc += ' '*(level - 1)
+                toc += '<ul>\n'
+            elif level == prev_level:
+                toc += '</li>\n'
+            elif level < prev_level:
+                toc += '</li>\n'
+                toc += ' '*level
+                toc += '</ul>\n'
+            prev_level = level
+
+            toc += ' '*level
+            toc += '<li>' + m[1]
+
+        toc += '\n </ul>'
+        toc += '\n</ul>'
+        toc += '</section>'
+        html = html.replace("<section id='toc'/>", toc)
 	print(html)
 
 if __name__ == '__main__':
