@@ -483,9 +483,9 @@ j = <span class="literal">1</span>
   <span class="typename">integer</span>, <span class="attribute">intent</span>(<span class="special">out</span>) :: <span class="scalarvar">z</span>
 
   <span class="scalarvar">x</span> = <span class="literal">4</span> <span class="comment">! Error, not allowed due to intent</span>
-  <span class="scalarvar">z</span> = <span class="literal">4</span> <span class="comment">! Allowed</span>
+  <span class="scalarvar">z</span> = <span class="literal">4</span>
   <span class="scalarvar">y</span> = <span class="scalarvar">z</span> <span class="comment">! Error, not allowed due to intent</span>
-  <span class="scalarvar">y</span> = <span class="scalarvar">x</span><span class="operator">*</span><span class="scalarvar">y</span> <span class="comment">! Allowed</span>
+  <span class="scalarvar">y</span> = <span class="scalarvar">x</span><span class="operator">*</span><span class="scalarvar">y</span>
 
   <span class="other">end subroutine</span>
 
@@ -595,10 +595,10 @@ j = <span class="literal">1</span>
 <span class="typename">integer</span> :: <span class="scalarvar">a</span>
 <span class="other">contains</span>
 
-  <span class="attribute">pure</span> <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">f</span>(x) <span class="comment">! Error, function can't be pure due to the content below</span>
-  <span class="typename">integer</span> :: <scalarvar>x <span class="comment">! Error, must have intent(in)</span>
-  <span class="typename">integer</span>, <span class="attribute">save</span> :: <scalarvar>file_unit <span class="comment">! Error, can't save state</span>
-  <span class="scalarvar">a</span> = <span class="literal">1</span> <span class="comment">! Error, can't assign to global or module variables</span>
+  <span class="attribute">pure</span> <span class="typename">integer</span> <span class="other">function</span> <span class="funcname">f</span>(x)              <span class="comment">! Error, function can't be pure due to the content below</span>
+  <span class="typename">integer</span> :: <scalarvar>x                            <span class="comment">! Error, must have intent(in)</span>
+  <span class="typename">integer</span>, <span class="attribute">save</span> :: <scalarvar>file_unit              <span class="comment">! Error, can't save state</span>
+  <span class="scalarvar">a</span> = <span class="literal">1</span>                                   <span class="comment">! Error, can't assign to global or module variables</span>
   <span class="other">open</span>(newunit=file_unit, file=<span class="literal">"example"</span>) <span class="comment">! Error, can't use I/O</span>
 
   <span class="other">end function</span>
